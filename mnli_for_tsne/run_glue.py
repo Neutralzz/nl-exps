@@ -264,7 +264,7 @@ def evaluate(args, model, tokenizer, prefix=""):
                 preds = np.append(preds, logits.detach().cpu().numpy(), axis=0)
                 out_label_ids = np.append(out_label_ids, inputs['labels'].detach().cpu().numpy(), axis=0)
             
-            for i in range(args.eval_batch_size):
+            for i in range(inputs['labels'].size()[0].item()):
                 record = {}
                 record['label'] = inputs['labels'][i].cpu().item()
                 for j in range(len(hidden_states)):
