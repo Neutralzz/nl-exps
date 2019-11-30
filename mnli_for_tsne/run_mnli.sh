@@ -2,7 +2,7 @@ export GLUE_DIR=/home/aistudio/data/glue
 export TASK_NAME=MNLI
 export OUTPUT_DIR=/home/aistudio/work/output/test
 
-python ./examples/run_glue.py \
+python run_glue.py \
     --model_type bert \
     --model_name_or_path bert-base-uncased \
     --task_name $TASK_NAME \
