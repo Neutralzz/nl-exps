@@ -263,12 +263,13 @@ def evaluate(args, model, tokenizer, prefix=""):
             else:
                 preds = np.append(preds, logits.detach().cpu().numpy(), axis=0)
                 out_label_ids = np.append(out_label_ids, inputs['labels'].detach().cpu().numpy(), axis=0)
-            record = {}
+            
             for i in range(args.eval_batch_size):
-                record['label'] = inputs['labels'].cpu().tolist()[i]
+                record = {}
+                record['label'] = inputs['labels'][i].cpu().item()
                 for j in range(len(hidden_states)):
-                    record['layer-%d'] = hidden_states[j].cpu().tolist()[i][0]
-            vectors_with_label.append(record)
+                    record['layer-%d'%j] = hidden_states[j][i,0].cpu().tolist()
+                vectors_with_label.append(record)
 
         eval_loss = eval_loss / nb_eval_steps
         if args.output_mode == "classification":
