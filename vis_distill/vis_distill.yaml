@@ -1,0 +1,81 @@
+description: Distillation Experiment
+
+auth:
+  vc: nextmsra
+  cluster: eu1
+  docker:
+    registry: phillyregistry.azurecr.io
+    image: philly/jobs/custom/pytorch:pytorch1.1.0-py36
+
+code:
+  local_dir: $CONFIG_DIR
+
+storage:
+  _default:
+    storage_account_name: conversationhub
+    container_name: unilm
+    mount_path: /mnt/unilm
+  _output:
+    storage_account_name: conversationhub
+    container_name: unilm
+    mount_path: /mnt/outputs
+
+search:
+  job_template:
+    name: ml_sw-{sw}_hs-{sw}_ldh-{ldh}_ldp-{ldp}_lr-{lr}_epochs-{epochs}
+
+    sku: G1
+    sku_count: 1
+    
+    command:
+      - source setup.sh
+      - export TASK=MNLI
+      - export DATA_DIR=/mnt/unilm/hanbao/exp/bert_kd/glue_data/$$TASK
+      - export TEACHER_MODEL_DIR=/mnt/unilm/hanbao/exp/bert_kd/TEACHER-$$TASK
+      - export STD_WEIGHTS=/mnt/unilm/hanbao/exp/bert_kd/std_weights/model_l4_{sw}.pth
+      - python att_transfer/run_glue_for_distill.py  
+          --data_dir $$DATA_DIR
+          --model_type bert 
+          --model_name_or_path bert-base-uncased 
+          --task_name $$TASK 
+          --output_dir [PT_OUTPUT_DIR] 
+          --student_pretrained_weights $$STD_WEIGHTS
+          --distill_hidden_select {sw}
+          --teacher_model_dir $$TEACHER_MODEL_DIR 
+          --student_config att_transfer/student_config.json 
+          --teacher_config att_transfer/teacher_config.json 
+          --distill_hidden 
+          --distill_predict 
+          --lambda_kd_h {ldh} 
+          --lambda_kd_p {ldp}
+          --lambda_kd_T 5 
+          --do_train --do_eval --do_lower_case 
+          --max_seq_length 128 
+          --per_gpu_train_batch_size 32 
+          --learning_rate {lr} 
+          --num_train_epochs {epochs} 
+          --logging_steps 500 
+          --save_steps 2000 
+          --eval_all_checkpoints 
+          --overwrite_output_dir
+    #submit_args:
+    #  queue: bonus
+  type: grid
+  max_trials: 100
+  params:
+    - name: sw
+      spec: discrete
+      #values: ['0-3-5-10', '0-3-6-10', '2-3-5-11']
+      values: ['1-3-4-10', '2-3-4-11', '1-3-5-11', '2-3-6-10', '1-3-6-11', '2-3-5-11']
+    - name: ldh
+      spec: discrete
+      values: [1]
+    - name: ldp
+      spec: discrete
+      values: [1]
+    - name: lr
+      spec: discrete
+      values: [5e-5]
+    - name: epochs
+      spec: discrete
+      values: [5]
