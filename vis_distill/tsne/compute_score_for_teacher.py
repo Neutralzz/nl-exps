@@ -45,7 +45,7 @@ from transformers import (WEIGHTS_NAME, BertConfig,
                                   BertForSequenceClassification, BertTokenizer
                                 )
 
-from transformers import AdamW, get_linear_schedule_with_warmup
+from transformers import AdamW, WarmupLinearSchedule
 
 from transformers import glue_compute_metrics as compute_metrics
 from transformers import glue_output_modes as output_modes
