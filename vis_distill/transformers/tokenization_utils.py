@@ -821,25 +821,18 @@ class PreTrainedTokenizer(object):
         pair = bool(pair_ids is not None)
         len_ids = len(ids)
         len_pair_ids = len(pair_ids) if pair else 0
+        n_added_tokens = self.num_added_tokens(pair=pair) if add_special_tokens else 0
 
         encoded_inputs = {}
-        if max_length:
-            n_added_tokens = self.num_added_tokens(pair=pair) if add_special_tokens else 0
-            if pair and n_added_tokens + (len_pair_ids if truncate_first_sequence else len_ids) >= max_length:
-                logger.warning(
-                    "You supplied a pair of sequence in which the sequence that will not be truncated is longer than the maximum specified length."
-                    "This pair of sequences will not be truncated.")
-            else:
-                if n_added_tokens + len_ids + len_pair_ids > max_length:
-                    if truncate_first_sequence or not pair:
-                        encoded_inputs["overflowing_tokens"] = ids[max_length - len_pair_ids - n_added_tokens - stride:]
-                        ids = ids[:max_length - len_pair_ids - n_added_tokens]
-                    elif not truncate_first_sequence and pair:
-                        encoded_inputs["overflowing_tokens"] = pair_ids[max_length - len_ids - n_added_tokens - stride:]
-                        pair_ids = pair_ids[:max_length - len_ids - n_added_tokens]
-                    else:
-                        logger.warning(
-                            "Cannot truncate second sequence as it is not provided. No truncation.")
+        total_len = n_added_tokens + len_ids + len_pair_ids
+        if max_length and total_len > max_length:
+            encoded_inputs["overflowing_tokens"] = []
+            for _ in range(total_len - max_length):
+                if (not pair) or len(ids) > len(pair_ids):
+                    encoded_inputs["overflowing_tokens"] = [ids[-1]] + encoded_inputs["overflowing_tokens"]
+                    ids = ids[:-1]
+                else:
+                    pair_ids = pair_ids[:-1]
 
         if add_special_tokens:
             sequence = self.add_special_tokens_sequence_pair(ids, pair_ids) if pair else self.add_special_tokens_single_sequence(ids)
