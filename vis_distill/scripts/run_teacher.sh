@@ -1,13 +1,12 @@
 export TASK_NAME=MNLI
 export GLUE_DIR=/home/aistudio/data/glue_data
 export OUTPUT_DIR=/home/aistudio/work/teacher_models/model-$TASK_NAME
-export CACHE_DIR=/home/aistudio/data/pretrained_models
+export PYTORCH_PRETRAINED_BERT_CACHE=/home/aistudio/data/pretrained_models
 
 python run_glue.py \
     --model_type bert \
     --model_name_or_path bert-base-uncased \
     --task_name $TASK_NAME \
-    --cache_dir $CACHE_DIR \
     --do_train \
     --do_eval \
     --do_lower_case \
