@@ -54,7 +54,6 @@ from transformers import glue_convert_examples_to_features as convert_examples_t
 
 logger = logging.getLogger(__name__)
 
-ALL_MODELS = sum((tuple(conf.pretrained_config_archive_map.keys()) for conf in (BertConfig)), ())
 
 MODEL_CLASSES = {
     'bert': (BertConfig, BertForSequenceClassification, BertTokenizer),
@@ -228,8 +227,7 @@ def main():
                         help="The output directory where the model predictions and checkpoints will be written.")
     parser.add_argument("--model_type", default='bert', type=str,
                         help="Model type selected in the list: " + ", ".join(MODEL_CLASSES.keys()))
-    parser.add_argument("--model_name_or_path", default='bert-base-uncased', type=str,
-                        help="Path to pre-trained model or shortcut name selected in the list: " + ", ".join(ALL_MODELS))
+    parser.add_argument("--model_name_or_path", default='bert-base-uncased', type=str)
 
     ## Other parameters
     parser.add_argument("--config_name", default="", type=str,
@@ -357,7 +355,7 @@ def main():
             global_step = checkpoint.split('-')[-1] if len(checkpoints) > 1 else ""
             prefix = checkpoint.split('/')[-1] if checkpoint.find('checkpoint') != -1 else ""
             
-            model = model_class.from_pretrained(checkpoint)
+            model = model_class.from_pretrained(checkpoint, output_hidden_states=True)
             model.to(args.device)
             result = evaluate(args, model, tokenizer, prefix=prefix)
             result = dict((k + '_{}'.format(global_step), v) for k, v in result.items())
