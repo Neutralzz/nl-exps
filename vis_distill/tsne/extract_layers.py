@@ -39,26 +39,26 @@ if __name__ == '__main__':
         tidx = [int(_) for _ in line.split('-')]
         print('Teacher Layers:', tidx)    
         std_idx = 0
-        for teacher_idx in tidx:
+        for selected_idx in tidx:
             for w in ['weight', 'bias']:
                 compressed_sd[f'{prefix}.encoder.layer.{std_idx}.attention.self.query.{w}'] = \
-                    state_dict[f'{prefix}.encoder.layer.{teacher_idx}.attention.self.query.{w}']
+                    state_dict[f'{prefix}.encoder.layer.{selected_idx}.attention.self.query.{w}']
                 compressed_sd[f'{prefix}.encoder.layer.{std_idx}.attention.self.key.{w}'] = \
-                    state_dict[f'{prefix}.encoder.layer.{teacher_idx}.attention.self.key.{w}']
+                    state_dict[f'{prefix}.encoder.layer.{selected_idx}.attention.self.key.{w}']
                 compressed_sd[f'{prefix}.encoder.layer.{std_idx}.attention.self.value.{w}'] = \
-                    state_dict[f'{prefix}.encoder.layer.{teacher_idx}.attention.self.value.{w}']
+                    state_dict[f'{prefix}.encoder.layer.{selected_idx}.attention.self.value.{w}']
 
                 compressed_sd[f'{prefix}.encoder.layer.{std_idx}.attention.output.dense.{w}'] = \
-                    state_dict[f'{prefix}.encoder.layer.{teacher_idx}.attention.output.dense.{w}']
+                    state_dict[f'{prefix}.encoder.layer.{selected_idx}.attention.output.dense.{w}']
                 compressed_sd[f'{prefix}.encoder.layer.{std_idx}.attention.output.LayerNorm.{w}'] = \
-                    state_dict[f'{prefix}.encoder.layer.{teacher_idx}.attention.output.LayerNorm.{w}']
+                    state_dict[f'{prefix}.encoder.layer.{selected_idx}.attention.output.LayerNorm.{w}']
 
                 compressed_sd[f'{prefix}.encoder.layer.{std_idx}.intermediate.dense.{w}'] = \
-                    state_dict[f'{prefix}.encoder.layer.{teacher_idx}.intermediate.dense.{w}']
+                    state_dict[f'{prefix}.encoder.layer.{selected_idx}.intermediate.dense.{w}']
                 compressed_sd[f'{prefix}.encoder.layer.{std_idx}.output.dense.{w}'] = \
-                    state_dict[f'{prefix}.encoder.layer.{teacher_idx}.output.dense.{w}']
+                    state_dict[f'{prefix}.encoder.layer.{selected_idx}.output.dense.{w}']
                 compressed_sd[f'{prefix}.encoder.layer.{std_idx}.output.LayerNorm.{w}'] = \
-                    state_dict[f'{prefix}.encoder.layer.{teacher_idx}.output.LayerNorm.{w}']
+                    state_dict[f'{prefix}.encoder.layer.{selected_idx}.output.LayerNorm.{w}']
             std_idx += 1
 
         print(f'N layers selected for distillation: {std_idx}')

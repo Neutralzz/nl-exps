@@ -457,7 +457,8 @@ def main():
     parser.add_argument("--teacher_config", default="", type=str)
 
     ## Other parameters
-    parser.add_argument("--student_pretrained_weights", default=None, type=str)
+    parser.add_argument("--student_hidden_layers", default=None, type=int)
+    parser.add_argument("--student_weight_select", default=None, type=str)
     parser.add_argument("--distill_hidden_select", default=None, type=str)
     parser.add_argument("--distill_hidden", action="store_true", help="distill bert encoders")
     parser.add_argument("--distill_attention", action="store_true", help="distill bert pooler")
@@ -587,16 +588,16 @@ def main():
 
     args.model_type = args.model_type.lower()
     config_class, model_class, tokenizer_class = MODEL_CLASSES[args.model_type]
-    student_config = config_class.from_pretrained(args.student_config, num_labels=num_labels, finetuning_task=args.task_name)
+    if args.student_hidden_layers is None:
+        student_config = config_class.from_pretrained(args.student_config, num_labels=num_labels, finetuning_task=args.task_name)
+    else:
+        student_config = config_class.from_pretrained(args.student_config, num_labels=num_labels, 
+            finetuning_task=args.task_name, num_hidden_layers=args.student_hidden_layers)
     teacher_config = config_class.from_pretrained(args.teacher_config, num_labels=num_labels, finetuning_task=args.task_name)
     tokenizer = tokenizer_class.from_pretrained(args.tokenizer_name if args.tokenizer_name else args.model_name_or_path, do_lower_case=args.do_lower_case)
     
-    if args.student_pretrained_weights is None:
-        model = model_class.from_pretrained(args.model_name_or_path, from_tf=bool('.ckpt' in args.model_name_or_path), config=student_config)
-    else:
-        student_pretrained_weights = torch.load(args.student_pretrained_weights, map_location='cpu')
-        model = model_class.from_pretrained(args.model_name_or_path, from_tf=bool('.ckpt' in args.model_name_or_path), 
-                state_dict=student_pretrained_weights, config=student_config)
+    model = model_class.from_pretrained(args.model_name_or_path, from_tf=bool('.ckpt' in args.model_name_or_path), 
+                config=student_config, weight_select= args.model_type+':'+args.student_weight_select)
     teacher_model = model_class.from_pretrained(args.teacher_model_dir, config=teacher_config)
 
     if args.distill_hidden_select is not None:

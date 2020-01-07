@@ -277,6 +277,7 @@ class PreTrainedModel(nn.Module):
         force_download = kwargs.pop('force_download', False)
         proxies = kwargs.pop('proxies', None)
         output_loading_info = kwargs.pop('output_loading_info', False)
+        weight_select = kwargs.pop('weight_select', None)
 
         # Load config
         if config is None:
@@ -343,6 +344,49 @@ class PreTrainedModel(nn.Module):
 
         if state_dict is None and not from_tf:
             state_dict = torch.load(resolved_archive_file, map_location='cpu')
+
+        if weight_select is not None:
+            assert isinstance(weight_select, str)
+            model_type, layer_select = weight_select.split(':')
+            tidx = [int(_) for _ in layer_select.split('-')]
+            assert len(tidx) == config.num_hidden_layers
+            logger.info('Selected Layers: {}'.format(tidx))    
+            compressed_sd = {}
+            if model_type == 'bert':
+                prefix = 'bert'
+                for w in ['word_embeddings', 'position_embeddings', 'token_type_embeddings']:
+                    compressed_sd[f'{prefix}.embeddings.{w}.weight'] = \
+                        state_dict[f'{prefix}.embeddings.{w}.weight']
+                for w in ['weight', 'bias']:
+                    compressed_sd[f'{prefix}.embeddings.LayerNorm.{w}'] = \
+                        state_dict[f'{prefix}.embeddings.LayerNorm.{w}']
+                    compressed_sd[f'{prefix}.pooler.dense.{w}'] = \
+                        state_dict[f'{prefix}.pooler.dense.{w}']
+                std_idx = 0
+                for selected_idx in tidx:
+                    for w in ['weight', 'bias']:
+                        compressed_sd[f'{prefix}.encoder.layer.{std_idx}.attention.self.query.{w}'] = \
+                            state_dict[f'{prefix}.encoder.layer.{selected_idx}.attention.self.query.{w}']
+                        compressed_sd[f'{prefix}.encoder.layer.{std_idx}.attention.self.key.{w}'] = \
+                            state_dict[f'{prefix}.encoder.layer.{selected_idx}.attention.self.key.{w}']
+                        compressed_sd[f'{prefix}.encoder.layer.{std_idx}.attention.self.value.{w}'] = \
+                            state_dict[f'{prefix}.encoder.layer.{selected_idx}.attention.self.value.{w}']
+
+                        compressed_sd[f'{prefix}.encoder.layer.{std_idx}.attention.output.dense.{w}'] = \
+                            state_dict[f'{prefix}.encoder.layer.{selected_idx}.attention.output.dense.{w}']
+                        compressed_sd[f'{prefix}.encoder.layer.{std_idx}.attention.output.LayerNorm.{w}'] = \
+                            state_dict[f'{prefix}.encoder.layer.{selected_idx}.attention.output.LayerNorm.{w}']
+
+                        compressed_sd[f'{prefix}.encoder.layer.{std_idx}.intermediate.dense.{w}'] = \
+                            state_dict[f'{prefix}.encoder.layer.{selected_idx}.intermediate.dense.{w}']
+                        compressed_sd[f'{prefix}.encoder.layer.{std_idx}.output.dense.{w}'] = \
+                            state_dict[f'{prefix}.encoder.layer.{selected_idx}.output.dense.{w}']
+                        compressed_sd[f'{prefix}.encoder.layer.{std_idx}.output.LayerNorm.{w}'] = \
+                            state_dict[f'{prefix}.encoder.layer.{selected_idx}.output.LayerNorm.{w}']
+                    std_idx += 1
+            else:
+                raise ValueError(f'model_type should be "bert".')
+            state_dict = compressed_sd
 
         missing_keys = []
         unexpected_keys = []
