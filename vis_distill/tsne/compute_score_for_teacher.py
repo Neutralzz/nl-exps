@@ -76,11 +76,19 @@ def direct_compute_ch_score(vectors_with_label):
                 processed_data[key].append(item[key])
     for key in processed_data:
         processed_data[key] = np.array(processed_data[key])
+    ans = []
+    prev = None
     for key in processed_data:
         if key == 'label':
             continue
         cs = ch_score(processed_data[key], processed_data['label'])
-        print(key, '->', cs)
+        print(key, cs, cs / prev if prev is not None else 1.0)
+        if prev is not None:
+            ans.append(cs / prev, key)
+        prev = cs
+    ans = sorted(ans)
+    print(ans)
+
 
 def evaluate(args, model, tokenizer, prefix=""):
     # Loop to handle MNLI double evaluation (matched, mis-matched)
