@@ -344,6 +344,11 @@ class PreTrainedModel(nn.Module):
 
         if state_dict is None and not from_tf:
             state_dict = torch.load(resolved_archive_file, map_location='cpu')
+            loaded_keys = list(state_dict.keys())
+            for old_key in loaded_keys:
+                if ('gamma' in old_key) or ('beta' in old_key):
+                    new_key = old_key.replace('gamma', 'weight').replace('beta', 'bias')
+                    state_dict[new_key] = state_dict.pop(old_key)
 
         if weight_select is not None:
             assert isinstance(weight_select, str)
