@@ -300,7 +300,7 @@ def train(args, train_dataset, model, teacher_model, tokenizer):
                 epoch_iterator.close()
                 break
 
-        if args.local_rank in [-1, 0]:
+        if args.save_each_epoch and args.local_rank in [-1, 0]:
             # Save model checkpoint
             output_dir = os.path.join(args.output_dir, 'checkpoint-{}'.format(global_step))
             if not os.path.exists(output_dir):
@@ -518,6 +518,7 @@ def main():
                         help="Save checkpoint every X updates steps.")
     parser.add_argument("--eval_all_checkpoints", action='store_true',
                         help="Evaluate all checkpoints starting with the same prefix as model_name ending and ending with step number")
+    parser.add_argument("--save_each_epoch", action='store_true')
     parser.add_argument("--no_cuda", action='store_true',
                         help="Avoid using CUDA when available")
     parser.add_argument('--overwrite_output_dir', action='store_true',
