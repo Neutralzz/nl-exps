@@ -84,7 +84,7 @@ def direct_compute_ch_score(vectors_with_label):
         cs = ch_score(processed_data[key], processed_data['label'])
         print(key, cs, cs / prev if prev is not None else 1.0)
         if prev is not None:
-            ans.append(cs / prev, key)
+            ans.append((cs / prev, key))
         prev = cs
     ans = sorted(ans)
     print(ans)
